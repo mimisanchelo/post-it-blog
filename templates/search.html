@@ -3,22 +3,16 @@
 
 
 {% block content %}
-    <center>
-    <h1>FEED</h1>
-    </center>
+  
+<h2>You searched for</h2>
+<p>{{ searched }}</p>
+
+
+<div class="row ">
     {% for post in posts%}
-    
-    <div class="card mb-3" style="width: 30rem; margin: auto;">
-            <h6 class="card-header">
-                {% if post.poster.img_url %}
-                <a href="{{ url_for('profile', id=post.poster.id) }}"><img src="{{post.poster.img_url}}" alt="" class="rounded-circle img-fluid object-fit-cover" style="width: 25px; height: 25px">
-                    {{ post.poster.username }}</a>
-                {% else %}
-                <a href="{{ url_for('profile', id=post.poster.id) }}"><img src="{{ url_for('static', filename='assets/post-it-low-res.png') }}" alt="" style="width: 25px; height: 25px" class="rounded-circle img-fluid object-fit-cover">
-                    {{ post.poster.username }}</a>
-                {% endif %}
-                
-                
+    <div class="col-sm-12 col-md-6 col-lg-4 post">
+        <div class="card">
+            <h6 class="card-header"><a href="{{ url_for('profile', id=post.poster.id) }}">{{ post.poster.username }}</a>
                 {% if current_user.id == post.author_id %}
                 <a class="btn-dots-menu" data-bs-toggle="dropdown" aria-expanded="false">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
@@ -38,7 +32,7 @@
             </h6>
             <div class="card-body">
                 <a href="{{ url_for('show_post', id=post.id) }}" class="">
-                    <img src="{{ post.img_url }}" class="img-fluid object-fit-contain" alt="">
+                    <img src="{{ post.img_url}}" class="img-fluid object-fit-contain" alt="">
                 </a>
                 <div class="card-text d-flex  mt-3">
                     <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-heart ps-2 pb-2 svg-heart" viewBox="0 0 16 16">
@@ -54,11 +48,11 @@
                 </div>
                 <a href="{{ url_for('show_post', id=post.id) }}">
                     <h5 class="card-title">{{ post.title }}</h5>
-                    <p class="card-text">{{ post.content|safe }}</p>
                 </a>
-            </div>
+            </div>        
+        </div>
     </div>
-    
-    {% endfor %}
+    {% endfor %} 
+</div>
     
 {% endblock %}
