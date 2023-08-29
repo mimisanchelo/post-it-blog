@@ -6,7 +6,7 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 from flask_ckeditor import CKEditor
 
 from datetime import datetime as dt
-from forms import LoginForm, SignupForm, PostForm, UserForm, SearchForm
+from forms import LoginForm, SignupForm, PostForm, UserForm, SearchForm, CommentForm
 
 import os
 from dotenv import load_dotenv
@@ -38,6 +38,7 @@ class User(db.Model, UserMixin):
     date_joined = db.Column(db.DateTime, default=dt.now())
 
     posts = db.relationship('Post', backref='poster')
+    comment = db.relationship('Comment', backref='Commenter')
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -48,6 +49,17 @@ class Post(db.Model):
     date_posted = db.Column(db.DateTime, default=dt.now())
 
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    comments = db.relationship('Comment', backref='parent_post')
+    
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(512), nullable=False)
+    date_commented = db.Column(db.DateTime, default=dt.now())
+
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey("post.id"))
 
 with app.app_context():
     db.create_all()
@@ -148,10 +160,39 @@ def edit_post(id):
             flash('Something went wrong!')
     return render_template('edit-post.html', form=form)
 
-@app.route('/show_post/<int:id>')
+@app.route('/show_post/<int:id>', methods=['GET', 'POST'])
 def show_post(id):
+    form = CommentForm()
     post = Post.query.get_or_404(id)
-    return render_template('show-post.html', post=post)
+    if form.validate_on_submit():
+        if not current_user.is_authenticated:
+            flash('You need to login or register to comment')
+            return redirect(url_for('login'))
+        
+        new_comment = Comment(
+            text = form.content.data,
+            author_id = current_user.id,
+            parent_post = post
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return redirect(url_for('show_post', id=post.id))
+
+    return render_template('show-post.html', post=post, form=form)
+
+
+@app.route("/delete-comment/<post_id>/<comment_id>")
+@login_required
+def delete_comment(comment_id, post_id):
+    comment = Comment.query.filter_by(id=comment_id).first()
+    if not comment:
+        flash('Comment does not exist.', category='error')
+    else:
+        db.session.delete(comment)
+        db.session.commit()
+
+    return redirect(url_for('show_post', id=post_id))
+
 
 @app.route('/add-post', methods=['GET', 'POST'])
 @login_required
