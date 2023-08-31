@@ -37,9 +37,69 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(200), nullable=False)
     date_joined = db.Column(db.DateTime, default=dt.now())
 
-    posts = db.relationship('Post', backref='poster')
-    comment = db.relationship('Comment', backref='Commenter')
+    # Relationships
+    posts = db.relationship('Post', backref='poster' , cascade="all, delete-orphan")
+    comment = db.relationship('Comment', backref='Commenter', cascade="all, delete-orphan")
+    ## Like btn
+    liked = db.relationship('Social_like',
+                            foreign_keys='Social_like.user_id', 
+                            backref='user_like', lazy='dynamic', 
+                            cascade="all, delete-orphan")
 
+    def like_post(self, post):
+        if not self.has_liked_post(post):
+            like = Social_like(user_id=self.id, post_id=post.id)
+            db.session.add(like)
+
+    def unlike_post(self, post):
+        if self.has_liked_post(post):
+            Social_like.query.filter_by(
+                user_id=self.id,
+                post_id=post.id).delete()
+
+    def has_liked_post(self, post):
+        return Social_like.query.filter(
+            Social_like.user_id == self.id,
+            Social_like.post_id == post.id).count() > 0
+    
+    ## Follow btn
+    followed = db.relationship('Follow',
+                               foreign_keys='Follow.follower_id',
+                               backref=db.backref('follower', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+    
+    followers = db.relationship('Follow',
+                              foreign_keys='Follow.followed_id',
+                              backref=db.backref('followed', lazy='joined'),
+                              lazy='dynamic',
+                              cascade='all, delete-orphan')
+    
+    def follow(self, user):
+        if not self.is_following(user):
+            person = Follow(follower_id=self.id, followed_id=user.id)
+            db.session.add(person)
+
+    def unfollow(self, user):
+        if self.is_following(user):
+            Follow.query.filter_by(
+                follower_id=self.id, 
+                followed_id=user.id).delete()
+
+    def is_following(self, user):
+        return Follow.query.filter(
+            Follow.follower_id == self.id,
+            Follow.followed_id == user.id).count() > 0
+
+    def get_following(self, user):
+        return Follow.query.filter(
+            Follow.followed_id == user.id).count()
+    
+    def get_follower(self, user):
+        return Follow.query.filter(
+            Follow.follower_id == user.id).count()    
+    
+   
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable = False)
@@ -49,9 +109,9 @@ class Post(db.Model):
     date_posted = db.Column(db.DateTime, default=dt.now())
 
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    comments = db.relationship('Comment', backref='parent_post')
+    comments = db.relationship('Comment', backref='parent_post', cascade="all, delete-orphan")
+    likes = db.relationship('Social_like', backref='post', lazy='dynamic', cascade="all, delete-orphan")
     
-
 class Comment(db.Model):
     __tablename__ = 'comments'
     id = db.Column(db.Integer, primary_key=True)
@@ -61,6 +121,22 @@ class Comment(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey("post.id"))
 
+class Social_like(db.Model):
+    __tablename__ = 'likes'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey("post.id"))
+
+
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+                            primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+                            primary_key=True)
+    date_follow = db.Column(db.DateTime, default=dt.now())
+
+
 with app.app_context():
     db.create_all()
 
@@ -69,7 +145,36 @@ def base():
     form = SearchForm()
     return dict(form=form)
 
+#------------ ACTIONS ---------------#
+@app.route('/like/<int:post_id>/<action>')
+def like_action(post_id, action):
+    post = Post.query.filter_by(id=post_id).first_or_404()
 
+    if action =='like':
+        current_user.like_post(post)
+        db.session.commit()
+
+    if action == 'unlike':
+        current_user.unlike_post(post)
+        db.session.commit()
+
+    return redirect(request.referrer)
+
+@app.route('/follow/<int:user_id>/<action>')
+@login_required
+def follow_action(user_id, action):
+    user = User.query.filter_by(id=user_id).first_or_404()
+    if action =='follow':
+        current_user.follow(user)
+        db.session.commit()
+
+    if action == 'unfollow':
+        current_user.unfollow(user)
+        db.session.commit()
+
+    return redirect(request.referrer)
+
+#------------ SEARCH RESULT ---------------#
 @app.route('/search', methods=['GET', 'POST'])
 def get_search():
     form = SearchForm()
@@ -88,8 +193,7 @@ def get_search():
                                posts=posts
                             )
 
-
-
+#------------ PROFILE ---------------#
 @app.route('/profile/settings/<int:id>', methods=['GET', 'POST'])
 @login_required
 def profile_settings(id):
@@ -114,7 +218,7 @@ def profile_settings(id):
             return redirect(url_for("profile", id=profile_to_update.id))
         except:
             flash('You have done something wrong. Try again!')
-    return render_template('settings.html', form=form)
+    return render_template('profile/settings.html', form=form)
 
 
 @app.route('/profile/<path:id>')
@@ -122,12 +226,13 @@ def profile_settings(id):
 def profile(id):
     user = User.query.get(id)
     print(user)
-    return render_template('profile.html', user=user)
+    return render_template('profile/profile.html', user=user)
 
-#------------ ROUTES ---------------#
+#------------ POST ---------------#
 @app.route('/delete/<int:id>')
 def delete_post(id):
     post = Post.query.get_or_404(id)
+
     try:
         db.session.delete(post)
         db.session.commit()
@@ -138,8 +243,6 @@ def delete_post(id):
         return render_template('index.html', posts=posts)
     except:
         flash('Something went wrong. Try again!')
-
-
 
 @app.route('/show_post/edit/<int:id>', methods=['GET', "POST"])
 @login_required
@@ -158,7 +261,7 @@ def edit_post(id):
             return redirect(url_for("show_post", id=post.id))
         except:
             flash('Something went wrong!')
-    return render_template('edit-post.html', form=form)
+    return render_template('post/edit-post.html', form=form)
 
 @app.route('/show_post/<int:id>', methods=['GET', 'POST'])
 def show_post(id):
@@ -178,7 +281,7 @@ def show_post(id):
         db.session.commit()
         return redirect(url_for('show_post', id=post.id))
 
-    return render_template('show-post.html', post=post, form=form)
+    return render_template('post/show-post.html', post=post, form=form)
 
 
 @app.route("/delete-comment/<post_id>/<comment_id>")
@@ -204,16 +307,15 @@ def add_post():
             title = form.title.data,
             content = form.content.data,
             img_url = form.img_url.data,
-            author_id = poster
-            
-    )
+            author_id = poster)
+        
         db.session.add(new_post)
         db.session.commit()
-        return redirect(url_for('profile', id=current_user))
+        return redirect(url_for('profile', id=current_user.id))
    
-    return render_template('create-post.html', form=form)
+    return render_template('post/create-post.html', form=form)
 
-
+#------------ REGISTRATION ---------------#
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = SignupForm()
@@ -245,10 +347,9 @@ def signup():
         form.password.data = ''
         form.password2.data = ''
         
-
-    return render_template('signup.html', form=form)
+    return render_template('auth/signup.html', form=form)
         
-
+#------------ AUTHENTICATION ---------------#
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -262,8 +363,9 @@ def login():
                 flash('Wrong password')
         else:
             flash('That user doesn`t exist')
-    return render_template('login.html', form=form)
+    return render_template('auth/login.html', form=form)
 
+#------------ LOGOUT ---------------#
 @app.route('/logout')
 @login_required
 def logout():
@@ -271,6 +373,7 @@ def logout():
     flash("You Have Been Logged Out!")
     return redirect(url_for('login'))
 
+#------------ HOME PAGE (FEED) ---------------#
 @app.route('/')
 def index():
     posts = Post.query.order_by(Post.date_posted.desc())

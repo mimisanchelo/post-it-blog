@@ -34,3 +34,7 @@ class UserForm(FlaskForm):
 class SearchForm(FlaskForm):
     searched = StringField("Searched", validators=[DataRequired()])
     submit = SubmitField("Submit Post")
+
+class CommentForm(FlaskForm):
+    content = CKEditorField('Comment', render_kw={'placeholder': 'Write a comment'}, validators=[DataRequired()])
+    submit = SubmitField("Submit Comment")

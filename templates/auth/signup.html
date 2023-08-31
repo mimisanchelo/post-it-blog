@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {%for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{message}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor%}
+    <br>
+    <center>
+        <img src="{{ url_for('static', filename='assets/logo-no-bg.png') }}" alt="">
+        <h1 class="mt-3">Sign up to continue</h1>
+        <br>
+        <p style="font-size: 20px;">Place to write a life story <br>and <br>share your experience</p>
+    
+    <br>
+
+    <form action="" method="POST">
+        {{form.hidden_tag() }}
+
+        {{ form.email.label(class='form-label') }}
+        {{ form.email(class='form-control', style='width: 75%;') }}
+        <br>
+
+        {{ form.username.label(class='form-label') }}
+        {{ form.username(class='form-control', style='width: 75%;') }}
+        <br>
+
+        {{ form.name.label(class='form-label') }}
+        {{ form.name(class='form-control', style='width: 75%;') }}
+        <br>
+
+        {{ form.password.label(class='form-label') }}
+        {{ form.password(class='form-control', style='width: 75%;') }}
+        <br>
+
+        {{ form.password2.label(class='form-label') }}
+        {{ form.password2(class='form-control', style='width: 75%;') }}
+        <br>
+
+        {{ form.submit(class='btn btn-login')}}
+
+    </form>
+    </center>
+<br>
+{% endblock %}

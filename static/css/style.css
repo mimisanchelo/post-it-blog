@@ -1,5 +1,9 @@
+/* light_black 57, 62, 70
+orange = 214/255, 90/255, 49/255, 255/255
+foggy = 238, 238, 238, 255
+dark = 34/255, 40/255, 49/255, 255/255 */
 body {
-    background:#eee;
+    background: rgb(238, 238, 238);
 }
 main{
     padding-top: 2em;
@@ -9,7 +13,9 @@ body,
 .view {
     height:100%;
 }
-
+nav {
+    background: rgb(57, 62, 70);
+}
 .navbar-brand {
     color:#fff !important;
 }
@@ -76,9 +82,30 @@ a {
     line-height: 2;
     padding: 0 0.25em;
 }
+.bi-heart-fill {
+    color: red;
+}
+.btn-follow {
+    background-color: rgb(243, 179, 158) !important;
+    border-color: black !important;
+}
+.btn-login, .btn-login:focus, .btn-login:hover, .btn-login:active {
+    background-color: rgb(34, 40, 49) !important;
+    border-color: black !important;
+    color: white !important;   
+}
+.btn-login:active {
+    transform: scale(0.97);
+}
 
+.overflow{
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
 
-/* breakers */
+/* breakers */  
 @media (max-width: 768px) {
     .profile-box-image {
         text-align: center;

@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='assets/postIt white.png')}}" class="nav_logo" alt=""></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,7 +19,6 @@
         <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="{{url_for('logout')}}">LogOut</a>
         </li>
-          
           
         {% else %}
         <li class="nav-item">
