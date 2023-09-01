@@ -181,16 +181,15 @@ def get_search():
     posts = Post.query
     if form.validate_on_submit():
         post_searched = form.searched.data
-        # query db
         posts = posts.filter(Post.content.like('%' + post_searched + '%') | 
                             Post.title.like('%' + post_searched + '%'))
         posts = posts.order_by(Post.date_posted.desc()).all()
     
 
         return render_template('search.html', 
-                               form=form, 
-                               searched = post_searched,
-                               posts=posts
+                            form=form, 
+                            searched = post_searched,
+                            posts=posts
                             )
 
 #------------ PROFILE ---------------#
@@ -206,12 +205,10 @@ def profile_settings(id):
         profile_to_update.username = request.form['username']
         profile_to_update.bio = request.form['bio']
 
-
         if request.form['img_url'] == '':
             profile_to_update.img_url = profile_to_update.img_url
         else:
             profile_to_update.img_url = request.form['img_url']
-
 
         try:
             db.session.commit()
@@ -225,7 +222,6 @@ def profile_settings(id):
 @login_required
 def profile(id):
     user = User.query.get(id)
-    print(user)
     return render_template('profile/profile.html', user=user)
 
 #------------ POST ---------------#
