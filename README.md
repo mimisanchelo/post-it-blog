@@ -8,22 +8,6 @@
 <img align="left" src="https://camo.githubusercontent.com/e6b67b27998fca3bccf4c0ee479fc8f9de09d91f389cccfbe6cb1e29c10cfbd7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f637373332d2532333135373242362e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d63737333266c6f676f436f6c6f723d7768697465"/>
 <img align="left" src="https://camo.githubusercontent.com/05020a4e2cf996983147d3a6bc5eff61195b8a5270914acc37018f8e6d7dcf14/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f52656e6465722d253436453342372e7376673f7374796c653d666f722d7468652d6261646765266c6f676f3d72656e646572266c6f676f436f6c6f723d7768697465"/>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <br></br>
 This is a Python-based blog project built using the Flask web framework and Bootstrap. The application uses a PostgreSQL database, which was created with the help of SQLAlchemy. Passwords are hashed using sha256 to protect sensitive data.
 <br></br>
